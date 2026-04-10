@@ -6,12 +6,14 @@ import '../../../../core/constants.dart';
 class OrderCard extends StatelessWidget {
   final Order order;
   final VoidCallback? onReorder;
+  final VoidCallback? onTap;
   final bool featured;
 
   const OrderCard({
     super.key,
     required this.order,
     this.onReorder,
+    this.onTap,
     this.featured = false,
   });
 
@@ -24,7 +26,9 @@ class OrderCard extends StatelessWidget {
         ? colors.onPrimary.withValues(alpha: 0.7)
         : theme.textTheme.bodySmall?.color;
 
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: featured ? colors.primary : theme.cardColor,
@@ -63,14 +67,31 @@ class OrderCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           // Items
-          ...order.items.take(3).map((item) => Text(
-                '${item.name} × ${item.qty}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: featured
-                      ? colors.onPrimary.withValues(alpha: 0.9)
-                      : theme.textTheme.bodySmall?.color,
-                  fontSize: 13,
-                ),
+          ...order.items.take(3).map((item) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${item.name} × ${item.qty}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: featured
+                          ? colors.onPrimary.withValues(alpha: 0.9)
+                          : theme.textTheme.bodySmall?.color,
+                      fontSize: 13,
+                    ),
+                  ),
+                  if (item.selectedVariants.isNotEmpty)
+                    Text(
+                      item.selectedVariants.entries
+                          .map((e) => '${e.key}: ${e.value}')
+                          .join(' · '),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: featured
+                            ? colors.onPrimary.withValues(alpha: 0.5)
+                            : colors.onSurfaceVariant,
+                        fontSize: 10,
+                      ),
+                    ),
+                ],
               )),
           if (order.items.length > 3)
             Text(
@@ -121,6 +142,7 @@ class OrderCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
       ),
     );
   }

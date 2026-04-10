@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../catalogue/data/datasources/catalogue_local_datasource.dart';
 import '../widgets/reorder_card.dart';
+import '../widgets/order_invoice_sheet.dart';
 import '../../../cart/presentation/providers/cart_provider.dart';
 import '../../../../shared/widgets/app_back_button.dart';
 import 'package:go_router/go_router.dart';
@@ -172,6 +173,7 @@ class _RecentOrdersScreenState extends State<RecentOrdersScreen>
                             padding: const EdgeInsets.only(bottom: 12),
                             child: OrderCard(
                               order: order,
+                              onTap: () => OrderInvoiceSheet.show(context, order),
                               onReorder: () {
                                 context.read<CartProvider>().reorder(order);
                                 context.push('/cart');

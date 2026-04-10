@@ -5,7 +5,7 @@ import '../../../../features/address/presentation/providers/address_provider.dar
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/app_back_button.dart';
 import '../../../../features/cart/presentation/widgets/empty_cart_view.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants.dart';
 import '../../../../features/address/presentation/widgets/address_selector.dart';
 import 'package:go_router/go_router.dart';
@@ -34,7 +34,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final addr = context.watch<AddressProvider>().selected;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final receiptStyle = AppTextStyles.receipt;
+    final receiptStyle =
+        theme.extension<AppThemeExtension>()!.receiptStyle;
     final headerStyle =
         receiptStyle.copyWith(color: theme.textTheme.bodySmall?.color);
     final subtotal = cart.subtotal;
@@ -106,8 +107,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 final idx = e.key;
                                 final item = e.value;
                                 return Padding(
-                                  padding: const EdgeInsets.only(bottom: 6),
-                                  child: Row(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
                                     children: [
                                       Expanded(
                                         flex: 5,
@@ -158,6 +162,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                           textAlign: TextAlign.right,
                                         ),
                                       ),
+                                    ],
+                                  ),
+                                  if (item.selectedVariants.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 4, top: 2),
+                                      child: Text(
+                                        item.selectedVariants.entries
+                                            .map((e) => '${e.key}: ${e.value}')
+                                            .join(' · '),
+                                        style: headerStyle.copyWith(
+                                            fontSize: 10),
+                                      ),
+                                    ),
                                     ],
                                   ),
                                 );
@@ -270,6 +288,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     image: i.product.image,
                                     quantity: i.quantity,
                                     price: i.product.price,
+                                    selectedVariants: i.selectedVariants,
                                   ))
                               .toList(),
                           total: cart.total,

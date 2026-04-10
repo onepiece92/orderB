@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../data/models/address.dart';
 import '../../../catalogue/data/datasources/catalogue_local_datasource.dart';
 
@@ -26,6 +25,7 @@ class AddressSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final addr = _address;
     final isHeader = variant == AddressSelectorVariant.header;
     final isCompact = variant == AddressSelectorVariant.compact;
@@ -40,9 +40,9 @@ class AddressSelector extends StatelessWidget {
                 : const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: isCompact
             ? BoxDecoration(
-                color: AppColors.white,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.beige),
+                border: Border.all(color: theme.dividerColor),
               )
             : null,
         child: Row(
@@ -53,7 +53,7 @@ class AddressSelector extends StatelessWidget {
                 width: isCompact ? 32 : 34,
                 height: isCompact ? 32 : 34,
                 decoration: BoxDecoration(
-                  color: AppColors.beige,
+                  color: theme.dividerColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 alignment: Alignment.center,
@@ -68,8 +68,9 @@ class AddressSelector extends StatelessWidget {
                 children: [
                   if (isHeader)
                     Text(
-                      'Deliver to ✦',
-                      style: AppTextStyles.caption.copyWith(letterSpacing: 0.3),
+                      'Pickup from ✦',
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(fontSize: 10, letterSpacing: 0.3),
                     ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -82,9 +83,9 @@ class AddressSelector extends StatelessWidget {
                         child: Text(
                           isHeader ? addr.address.split(',').first : addr.label,
                           style: isHeader
-                              ? AppTextStyles.headlineSmall
-                                  .copyWith(fontSize: 16)
-                              : AppTextStyles.bodyMedium.copyWith(
+                              ? theme.textTheme.headlineSmall
+                                  ?.copyWith(fontSize: 16)
+                              : theme.textTheme.bodyMedium?.copyWith(
                                   fontWeight: FontWeight.w500,
                                   fontSize: isCompact ? 13 : 14,
                                 ),
@@ -93,14 +94,14 @@ class AddressSelector extends StatelessWidget {
                       ),
                       if (!isHeader) ...[
                         const SizedBox(width: 6),
-                        _typeBadge(addr.type),
+                        _typeBadge(context, addr.type),
                       ],
                     ],
                   ),
                   if (!isHeader)
                     Text(
                       addr.address,
-                      style: AppTextStyles.bodySmall.copyWith(fontSize: 12),
+                      style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
                       overflow: TextOverflow.ellipsis,
                     ),
                 ],
@@ -109,7 +110,7 @@ class AddressSelector extends StatelessWidget {
             const SizedBox(width: 4),
             Icon(
               Icons.keyboard_arrow_down_rounded,
-              color: AppColors.softBrown,
+              color: theme.colorScheme.onSurfaceVariant,
               size: isHeader ? 18 : 20,
             ),
           ],
@@ -118,22 +119,22 @@ class AddressSelector extends StatelessWidget {
     );
   }
 
-  Widget _typeBadge(String type) {
+  Widget _typeBadge(BuildContext context, String type) {
     final isPickup = type == 'Pickup';
+    final color = isPickup ? AppColors.sage : AppColors.golden;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
-        color: isPickup
-            ? AppColors.sage.withValues(alpha: 0.13)
-            : AppColors.golden.withValues(alpha: 0.18),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(5),
       ),
       child: Text(
         type,
-        style: AppTextStyles.caption.copyWith(
-          color: isPickup ? AppColors.sage : AppColors.softBrown,
-          fontWeight: FontWeight.w500,
-        ),
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w500,
+              fontSize: 10,
+            ),
       ),
     );
   }
@@ -153,7 +154,8 @@ class AddressBottomSheet extends StatelessWidget {
   });
 
   /// Show the address selection bottom sheet.
-  static void show(BuildContext context, {
+  static void show(
+    BuildContext context, {
     required int selectedId,
     required ValueChanged<int> onSelect,
   }) {
@@ -170,11 +172,14 @@ class AddressBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-      decoration: const BoxDecoration(
-        color: AppColors.warmWhite,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -186,13 +191,13 @@ class AddressBottomSheet extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: AppColors.beige,
+                color: theme.dividerColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           Text('Select Address',
-              style: AppTextStyles.headlineLarge.copyWith(fontSize: 18)),
+              style: theme.textTheme.headlineLarge?.copyWith(fontSize: 18)),
           const SizedBox(height: 16),
           ...CatalogueLocalDatasource.savedAddresses.map((addr) {
             final isSelected = addr.id == selectedId;
@@ -206,10 +211,10 @@ class AddressBottomSheet extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.beige : Colors.transparent,
+                  color: isSelected ? theme.dividerColor : Colors.transparent,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isSelected ? AppColors.darkBrown : AppColors.beige,
+                    color: isSelected ? colors.primary : theme.dividerColor,
                     width: 1.5,
                   ),
                 ),
@@ -220,8 +225,8 @@ class AddressBottomSheet extends StatelessWidget {
                       height: 40,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.darkBrown.withValues(alpha: 0.1)
-                            : AppColors.beige,
+                            ? colors.primary.withValues(alpha: 0.1)
+                            : theme.dividerColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       alignment: Alignment.center,
@@ -234,16 +239,16 @@ class AddressBottomSheet extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(addr.label,
-                              style: AppTextStyles.bodyLarge
-                                  .copyWith(fontWeight: FontWeight.w500)),
+                              style: theme.textTheme.bodyLarge
+                                  ?.copyWith(fontWeight: FontWeight.w500)),
                           Text(addr.address,
-                              style: AppTextStyles.bodySmall
-                                  .copyWith(fontSize: 12)),
+                              style: theme.textTheme.bodySmall
+                                  ?.copyWith(fontSize: 12)),
                         ],
                       ),
                     ),
                     if (isSelected)
-                      const Icon(Icons.check_rounded,
+                      Icon(Icons.check_rounded,
                           color: AppColors.sage, size: 20),
                   ],
                 ),
@@ -259,16 +264,19 @@ class AddressBottomSheet extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                    color: AppColors.beige, width: 2, style: BorderStyle.solid),
+                    color: theme.dividerColor,
+                    width: 2,
+                    style: BorderStyle.solid),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_rounded, color: AppColors.softBrown, size: 18),
+                  Icon(Icons.add_rounded,
+                      color: colors.onSurfaceVariant, size: 18),
                   const SizedBox(width: 8),
                   Text('Add new address',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.softBrown,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colors.onSurfaceVariant,
                           fontWeight: FontWeight.w500)),
                 ],
               ),

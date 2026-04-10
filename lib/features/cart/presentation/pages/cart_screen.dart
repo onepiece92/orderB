@@ -91,7 +91,7 @@ class CartScreen extends StatelessWidget {
                             if (suggestions.isNotEmpty) ...[
                               const SizedBox(height: 8),
                               Text('Add something extra?',
-                                  style: AppTextStyles.headlineSmall),
+                                  style: Theme.of(context).textTheme.headlineSmall),
                               const SizedBox(height: 12),
                               SizedBox(
                                 height: 230,
@@ -124,7 +124,7 @@ class CartScreen extends StatelessWidget {
                             ],
 
                             // Address
-                            Text('DELIVER TO', style: AppTextStyles.labelSmall),
+                            Text('DELIVER TO', style: Theme.of(context).textTheme.labelSmall),
                             const SizedBox(height: 8),
                             AddressSelector(
                               selectedId: addrProv.selectedId,
@@ -144,7 +144,9 @@ class CartScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(
                                     AppDecorations.radiusCard),
                                 side: BorderSide(
-                                  color: AppColors.darkBrown
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
                                       .withValues(alpha: 0.05),
                                 ),
                               ),
@@ -171,13 +173,16 @@ class CartScreen extends StatelessWidget {
                                           MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text('Total',
-                                            style:
-                                                AppTextStyles.headlineMedium),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .headlineMedium),
                                         Text(
                                             AppConstants.formatPrice(cart.total),
                                             style: AppTextStyles.priceLarge
                                                 .copyWith(
-                                              color: AppColors.terracotta,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .error,
                                             )),
                                       ],
                                     ),
@@ -221,15 +226,14 @@ class _PriceSummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style:
-                AppTextStyles.bodyMedium.copyWith(color: AppColors.textLight)),
+        Text(label, style: theme.textTheme.bodySmall),
         Text(AppConstants.formatPrice(value),
-            style: AppTextStyles.bodyLarge.copyWith(
-                fontWeight: FontWeight.w600, color: AppColors.darkBrown)),
+            style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600)),
       ],
     );
   }

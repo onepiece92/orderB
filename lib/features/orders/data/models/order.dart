@@ -3,11 +3,13 @@ class OrderItem {
   final String name;
   final String image;
   final int qty;
+  final Map<String, String> selectedVariants;
 
   const OrderItem({
     required this.name,
     required this.image,
     required this.qty,
+    this.selectedVariants = const {},
   });
 }
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../shared/widgets/primary_button.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants.dart';
 import '../../../../features/orders/data/models/placed_order.dart';
 
@@ -158,13 +158,22 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen>
                                         Text('x${item.quantity}',
                                             style: theme.textTheme.bodySmall
                                                 ?.copyWith(fontSize: 12)),
+                                        if (item.selectedVariants.isNotEmpty)
+                                          Text(
+                                            item.selectedVariants.entries
+                                                .map((e) => '${e.key}: ${e.value}')
+                                                .join(' · '),
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(fontSize: 10),
+                                          ),
                                       ],
                                     ),
                                   ),
                                   Text(
                                     AppConstants.formatPrice(
                                         item.price * item.quantity),
-                                    style: AppTextStyles.receipt,
+                                    style: theme.extension<AppThemeExtension>()!
+                                        .receiptStyle,
                                   ),
                                 ],
                               ),

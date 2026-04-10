@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 
 /// Star rating display.
 class StarRating extends StatelessWidget {
@@ -22,7 +21,7 @@ class StarRating extends StatelessWidget {
       children: List.generate(total, (i) {
         return Icon(
           i < rating.round() ? Icons.star_rounded : Icons.star_outline_rounded,
-          color: i < rating.round() ? AppColors.accent : AppColors.beige,
+          color: i < rating.round() ? AppColors.accent : Theme.of(context).dividerColor,
           size: size,
         );
       }),
@@ -43,14 +42,15 @@ class RatingBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     // Simulated distribution
     const Map<int, int> dist = {5: 78, 4: 16, 3: 4, 2: 2, 1: 0};
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.beige),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
         children: [
@@ -59,7 +59,7 @@ class RatingBar extends StatelessWidget {
             children: [
               Text(
                 rating.toString(),
-                style: AppTextStyles.displayMedium.copyWith(fontSize: 32),
+                style: theme.textTheme.displayMedium?.copyWith(fontSize: 32),
               ),
               StarRating(rating: rating, size: 12),
             ],
@@ -76,7 +76,9 @@ class RatingBar extends StatelessWidget {
                     children: [
                       SizedBox(
                         width: 10,
-                        child: Text('$s', style: AppTextStyles.caption),
+                        child: Text('$s',
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(fontSize: 10)),
                       ),
                       const SizedBox(width: 6),
                       Expanded(
@@ -84,7 +86,7 @@ class RatingBar extends StatelessWidget {
                           borderRadius: BorderRadius.circular(2),
                           child: LinearProgressIndicator(
                             value: pct / 100,
-                            backgroundColor: AppColors.beige,
+                            backgroundColor: theme.dividerColor,
                             valueColor: const AlwaysStoppedAnimation<Color>(
                                 AppColors.golden),
                             minHeight: 4,

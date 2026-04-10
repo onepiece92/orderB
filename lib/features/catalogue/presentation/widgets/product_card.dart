@@ -103,7 +103,8 @@ class ProductCard extends StatelessWidget {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 AppConstants.formatPrice(product.price),
-                                style: AppTextStyles.price,
+                                style: AppTextStyles.price.copyWith(
+                                    color: colors.primary),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),

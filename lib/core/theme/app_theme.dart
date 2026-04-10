@@ -21,24 +21,24 @@ final class AppTheme {
         ),
         scaffoldBackgroundColor: AppColors.warmWhite,
         textTheme: GoogleFonts.dmSansTextTheme().copyWith(
-          displayLarge: AppTextStyles.displayLarge,
-          displayMedium: AppTextStyles.displayMedium,
-          headlineLarge: AppTextStyles.headlineLarge,
-          headlineMedium: AppTextStyles.headlineMedium,
-          headlineSmall: AppTextStyles.headlineSmall,
-          titleLarge: AppTextStyles.titleLarge,
-          bodyLarge: AppTextStyles.bodyLarge,
-          bodyMedium: AppTextStyles.bodyMedium,
-          bodySmall: AppTextStyles.bodySmall,
-          labelMedium: AppTextStyles.label,
-          labelSmall: AppTextStyles.labelSmall,
+          displayLarge: AppTextStyles.displayLarge.copyWith(color: AppColors.darkBrown),
+          displayMedium: AppTextStyles.displayMedium.copyWith(color: AppColors.darkBrown),
+          headlineLarge: AppTextStyles.headlineLarge.copyWith(color: AppColors.darkBrown),
+          headlineMedium: AppTextStyles.headlineMedium.copyWith(color: AppColors.darkBrown),
+          headlineSmall: AppTextStyles.headlineSmall.copyWith(color: AppColors.darkBrown),
+          titleLarge: AppTextStyles.titleLarge.copyWith(color: AppColors.darkBrown),
+          bodyLarge: AppTextStyles.bodyLarge.copyWith(color: AppColors.text),
+          bodyMedium: AppTextStyles.bodyMedium.copyWith(color: AppColors.text),
+          bodySmall: AppTextStyles.bodySmall.copyWith(color: AppColors.textLight),
+          labelMedium: AppTextStyles.label.copyWith(color: AppColors.textLight),
+          labelSmall: AppTextStyles.labelSmall.copyWith(color: AppColors.textLight),
         ),
         appBarTheme: AppBarTheme(
           backgroundColor: AppColors.warmWhite,
           elevation: 0,
           centerTitle: false,
           iconTheme: const IconThemeData(color: AppColors.darkBrown),
-          titleTextStyle: AppTextStyles.headlineLarge,
+          titleTextStyle: AppTextStyles.headlineLarge.copyWith(color: AppColors.darkBrown),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
@@ -174,11 +174,12 @@ final class AppTheme {
                 top: Radius.circular(AppDecorations.radiusCard)),
           ),
         ),
-        extensions: const <ThemeExtension<dynamic>>[
+        extensions: <ThemeExtension<dynamic>>[
           AppThemeExtension(
             productImageGradient: AppColors.productImageGradient,
             primaryGradient: AppColors.primaryGradient,
             heroGradient: AppColors.heroGradient,
+            receiptStyle: AppTextStyles.receipt.copyWith(color: AppColors.text),
           ),
         ],
       );
@@ -188,6 +189,9 @@ final class AppTheme {
   static const _darkCard = Color(0xFF251E1A);
   static const _darkDivider = Color(0xFF3A302A);
 
+  static const _darkOnSurface = AppColors.cream;
+  static const _darkOnSurfaceVariant = Color(0xFF9A8B7D);
+
   static ThemeData get dark => light.copyWith(
         brightness: Brightness.dark,
         colorScheme: const ColorScheme.dark(
@@ -196,13 +200,26 @@ final class AppTheme {
           secondary: AppColors.caramel,
           onSecondary: AppColors.darkBrown,
           surface: _darkSurface,
-          onSurface: AppColors.cream,
+          onSurface: _darkOnSurface,
           error: AppColors.terracotta,
-          onSurfaceVariant: Color(0xFF9A8B7D),
+          onSurfaceVariant: _darkOnSurfaceVariant,
         ),
         scaffoldBackgroundColor: _darkSurface,
         cardColor: _darkCard,
         dividerColor: _darkDivider,
+        textTheme: GoogleFonts.dmSansTextTheme().copyWith(
+          displayLarge: AppTextStyles.displayLarge.copyWith(color: _darkOnSurface),
+          displayMedium: AppTextStyles.displayMedium.copyWith(color: _darkOnSurface),
+          headlineLarge: AppTextStyles.headlineLarge.copyWith(color: _darkOnSurface),
+          headlineMedium: AppTextStyles.headlineMedium.copyWith(color: _darkOnSurface),
+          headlineSmall: AppTextStyles.headlineSmall.copyWith(color: _darkOnSurface),
+          titleLarge: AppTextStyles.titleLarge.copyWith(color: _darkOnSurface),
+          bodyLarge: AppTextStyles.bodyLarge.copyWith(color: _darkOnSurface),
+          bodyMedium: AppTextStyles.bodyMedium.copyWith(color: _darkOnSurface),
+          bodySmall: AppTextStyles.bodySmall.copyWith(color: _darkOnSurfaceVariant),
+          labelMedium: AppTextStyles.label.copyWith(color: _darkOnSurfaceVariant),
+          labelSmall: AppTextStyles.labelSmall.copyWith(color: _darkOnSurfaceVariant),
+        ),
         appBarTheme: AppBarTheme(
           backgroundColor: _darkSurface,
           elevation: 0,
@@ -253,24 +270,25 @@ final class AppTheme {
           hintStyle: AppTextStyles.bodyMedium
               .copyWith(color: const Color(0xFF9A8B7D)),
         ),
-        extensions: const <ThemeExtension<dynamic>>[
+        extensions: <ThemeExtension<dynamic>>[
           AppThemeExtension(
-            productImageGradient: LinearGradient(
+            productImageGradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [Color(0xFF2A2220), Color(0xFF352A24)],
             ),
-            primaryGradient: LinearGradient(
+            primaryGradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [AppColors.golden, AppColors.caramel],
             ),
-            heroGradient: LinearGradient(
+            heroGradient: const LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [Color(0xFF2A2220), Color(0xFF352A24), Color(0xFF3D302A)],
               stops: [0.0, 0.5, 1.0],
             ),
+            receiptStyle: AppTextStyles.receipt.copyWith(color: _darkOnSurface),
           ),
         ],
       );
@@ -281,11 +299,13 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
   final Gradient productImageGradient;
   final Gradient primaryGradient;
   final Gradient heroGradient;
+  final TextStyle receiptStyle;
 
   const AppThemeExtension({
     required this.productImageGradient,
     required this.primaryGradient,
     required this.heroGradient,
+    required this.receiptStyle,
   });
 
   @override
@@ -293,11 +313,13 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     Gradient? productImageGradient,
     Gradient? primaryGradient,
     Gradient? heroGradient,
+    TextStyle? receiptStyle,
   }) {
     return AppThemeExtension(
       productImageGradient: productImageGradient ?? this.productImageGradient,
       primaryGradient: primaryGradient ?? this.primaryGradient,
       heroGradient: heroGradient ?? this.heroGradient,
+      receiptStyle: receiptStyle ?? this.receiptStyle,
     );
   }
 
@@ -311,6 +333,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       primaryGradient:
           Gradient.lerp(primaryGradient, other.primaryGradient, t)!,
       heroGradient: Gradient.lerp(heroGradient, other.heroGradient, t)!,
+      receiptStyle: TextStyle.lerp(receiptStyle, other.receiptStyle, t)!,
     );
   }
 }

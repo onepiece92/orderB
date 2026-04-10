@@ -28,6 +28,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late final List<int> _selectedVariants =
       List.filled(widget.product.variants.length, 0);
 
+  Map<String, String> get _variantSelections {
+    final variants = widget.product.variants;
+    return {
+      for (var i = 0; i < variants.length; i++)
+        variants[i].title: variants[i].options[_selectedVariants[i]],
+    };
+  }
+
   @override
   void initState() {
     super.initState();
@@ -328,14 +336,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               if (cart.contains(widget.product)) {
                 cart.updateById(widget.product.id, _quantity);
               } else {
-                cart.addProduct(widget.product, quantity: _quantity);
+                cart.addProduct(widget.product,
+                    quantity: _quantity,
+                    selectedVariants: _variantSelections);
               }
             },
             onCheckout: () {
               if (_quantity > 0) {
                 final cart = context.read<CartProvider>();
                 if (!cart.contains(widget.product)) {
-                  cart.addProduct(widget.product, quantity: _quantity);
+                  cart.addProduct(widget.product,
+                      quantity: _quantity,
+                      selectedVariants: _variantSelections);
                 }
                 context.push('/cart');
               } else {

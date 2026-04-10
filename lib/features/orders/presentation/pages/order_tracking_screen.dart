@@ -175,9 +175,21 @@ class OrderTrackingScreen extends StatelessWidget {
                                   style: const TextStyle(fontSize: 20)),
                               const SizedBox(width: 10),
                               Expanded(
-                                child: Text(
-                                    '${item.name} × ${item.quantity}',
-                                    style: theme.textTheme.bodyMedium),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('${item.name} × ${item.quantity}',
+                                        style: theme.textTheme.bodyMedium),
+                                    if (item.selectedVariants.isNotEmpty)
+                                      Text(
+                                        item.selectedVariants.entries
+                                            .map((e) => '${e.key}: ${e.value}')
+                                            .join(' · '),
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(fontSize: 10),
+                                      ),
+                                  ],
+                                ),
                               ),
                               Text(
                                   AppConstants.formatPrice(

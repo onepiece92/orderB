@@ -21,12 +21,19 @@ class CartProvider extends ChangeNotifier {
   bool contains(Product product) =>
       _items.any((i) => i.product.id == product.id);
 
-  void addProduct(Product product, {int quantity = 1}) {
+  void addProduct(Product product, {
+    int quantity = 1,
+    Map<String, String> selectedVariants = const {},
+  }) {
     final index = _items.indexWhere((i) => i.product.id == product.id);
     if (index >= 0) {
       _items[index].quantity += quantity;
     } else {
-      _items.add(CartItem(product: product, quantity: quantity));
+      _items.add(CartItem(
+        product: product,
+        quantity: quantity,
+        selectedVariants: selectedVariants,
+      ));
     }
     notifyListeners();
   }
