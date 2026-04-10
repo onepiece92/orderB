@@ -2,22 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_provider.dart';
 import 'features/cart/presentation/providers/cart_provider.dart';
 import 'features/favourites/presentation/providers/favourites_provider.dart';
 import 'features/address/presentation/providers/address_provider.dart';
 import 'shared/widgets/nav_provider.dart';
+import 'features/profile/presentation/providers/user_provider.dart';
 import 'core/navigation/app_router.dart';
+import 'core/constants.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      statusBarBrightness: Brightness.light,
-    ),
-  );
   runApp(const App());
 }
 
@@ -32,12 +28,32 @@ class App extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => FavouritesProvider()),
         ChangeNotifierProvider(create: (_) => AddressProvider()),
         ChangeNotifierProvider(create: (_) => NavProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: MaterialApp.router(
-        title: 'La Petite Boulangerie',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        routerConfig: router,
+      child: Builder(
+        builder: (context) {
+          final themeMode = context.watch<ThemeProvider>().mode;
+          final isDark = themeMode == ThemeMode.dark;
+
+          // Update status bar style based on theme
+          SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness:
+                isDark ? Brightness.light : Brightness.dark,
+            statusBarBrightness:
+                isDark ? Brightness.dark : Brightness.light,
+          ));
+
+          return MaterialApp.router(
+            title: AppConstants.appName,
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: themeMode,
+            routerConfig: router,
+          );
+        },
       ),
     );
   }

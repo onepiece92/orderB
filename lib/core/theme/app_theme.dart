@@ -182,6 +182,98 @@ final class AppTheme {
           ),
         ],
       );
+
+  // ─── Dark Theme ─────────────────────────────────────────────
+  static const _darkSurface = Color(0xFF1A1412);
+  static const _darkCard = Color(0xFF251E1A);
+  static const _darkDivider = Color(0xFF3A302A);
+
+  static ThemeData get dark => light.copyWith(
+        brightness: Brightness.dark,
+        colorScheme: const ColorScheme.dark(
+          primary: AppColors.golden,
+          onPrimary: AppColors.darkBrown,
+          secondary: AppColors.caramel,
+          onSecondary: AppColors.darkBrown,
+          surface: _darkSurface,
+          onSurface: AppColors.cream,
+          error: AppColors.terracotta,
+          onSurfaceVariant: Color(0xFF9A8B7D),
+        ),
+        scaffoldBackgroundColor: _darkSurface,
+        cardColor: _darkCard,
+        dividerColor: _darkDivider,
+        appBarTheme: AppBarTheme(
+          backgroundColor: _darkSurface,
+          elevation: 0,
+          centerTitle: false,
+          iconTheme: const IconThemeData(color: AppColors.cream),
+          titleTextStyle: AppTextStyles.headlineLarge.copyWith(
+            color: AppColors.cream,
+          ),
+        ),
+        cardTheme: const CardThemeData(
+          color: _darkCard,
+          elevation: 0,
+          margin: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.all(Radius.circular(AppDecorations.radiusCard)),
+            side: BorderSide(color: _darkDivider),
+          ),
+        ),
+        dividerTheme: const DividerThemeData(
+          color: _darkDivider,
+          thickness: 1,
+          space: 0,
+        ),
+        bottomSheetTheme: const BottomSheetThemeData(
+          backgroundColor: _darkCard,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppDecorations.radiusCard)),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: _darkCard,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppDecorations.radiusM),
+            borderSide: const BorderSide(color: _darkDivider, width: 1.5),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppDecorations.radiusM),
+            borderSide: const BorderSide(color: _darkDivider, width: 1.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppDecorations.radiusM),
+            borderSide:
+                const BorderSide(color: AppColors.golden, width: 1.5),
+          ),
+          hintStyle: AppTextStyles.bodyMedium
+              .copyWith(color: const Color(0xFF9A8B7D)),
+        ),
+        extensions: const <ThemeExtension<dynamic>>[
+          AppThemeExtension(
+            productImageGradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF2A2220), Color(0xFF352A24)],
+            ),
+            primaryGradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.golden, AppColors.caramel],
+            ),
+            heroGradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF2A2220), Color(0xFF352A24), Color(0xFF3D302A)],
+              stops: [0.0, 0.5, 1.0],
+            ),
+          ),
+        ],
+      );
 }
 
 /// Custom theme extension for properties not supported by default ThemeData.

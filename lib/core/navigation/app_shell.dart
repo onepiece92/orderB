@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../theme/app_colors.dart';
 import '../../shared/widgets/bottom_nav_bar.dart';
 import '../../shared/widgets/nav_provider.dart';
 
@@ -29,7 +28,7 @@ class AppShell extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.warmWhite,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         bottom: false,
         child: navigationShell,

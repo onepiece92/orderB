@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
+import '../../../../core/theme/theme_provider.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../features/catalogue/data/datasources/catalogue_local_datasource.dart';
 import 'package:go_router/go_router.dart';
@@ -20,6 +22,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<UserProvider>();
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -57,7 +60,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               borderRadius: BorderRadius.circular(28),
                             ),
                             alignment: Alignment.center,
-                            child: Text('S',
+                            child: Text(user.initials,
                                 style: Theme.of(context)
                                     .textTheme
                                     .displayLarge
@@ -79,17 +82,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     const SizedBox(height: 24),
                     _FieldLabel('FULL NAME'),
-                    _FieldInput(hint: 'Sophie Martin'),
+                    _FieldInput(hint: user.name),
                     const SizedBox(height: 14),
                     _FieldLabel('EMAIL'),
-                    _FieldInput(hint: 'sophie.martin@email.com'),
+                    _FieldInput(hint: user.email),
                     const SizedBox(height: 14),
                     _FieldLabel('PHONE'),
-                    _FieldInput(hint: '+44 7700 900 123'),
+                    _FieldInput(hint: user.phone),
                     const SizedBox(height: 14),
                     _FieldLabel('BIRTHDAY'),
                     _FieldInput(
-                        hint: 'March 14, 1990',
+                        hint: user.birthday,
                         suffixIcon: Icons.calendar_today_outlined),
                     const SizedBox(height: 14),
                     _FieldLabel('BIO'),
@@ -407,7 +410,7 @@ class PaymentMethodsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: null,
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.all(16),
                       side: BorderSide(
@@ -703,11 +706,11 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _darkMode = false;
   bool _haptics = true;
 
   @override
   Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -732,9 +735,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _SectionLabel('APPEARANCE'),
                   const SizedBox(height: 8),
                   _ToggleCard(children: [
-                    _buildToggle('🌙', 'Dark Mode', 'Coming soon', _darkMode,
-                        (v) => setState(() => _darkMode = v),
-                        disabled: true),
+                    _buildToggle(
+                        '🌙', 'Dark Mode', null, themeProv.isDark,
+                        (_) => themeProv.toggle()),
                     _buildToggle('📱', 'Haptic Feedback', null, _haptics,
                         (v) => setState(() => _haptics = v),
                         showDivider: false),
@@ -780,7 +783,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildLinkRow(String icon, String label, String? valueText,
-      {bool showDivider = true}) {
+      {bool showDivider = true, VoidCallback? onTap}) {
     return Column(
       children: [
         ListTile(
@@ -797,7 +800,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ?.copyWith(fontSize: 13))
               : Icon(Icons.chevron_right_rounded,
                   color: Theme.of(context).colorScheme.outline, size: 20),
-          onTap: () {},
+          onTap: onTap,
         ),
         if (showDivider) Divider(height: 0),
       ],

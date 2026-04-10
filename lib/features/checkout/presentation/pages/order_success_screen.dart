@@ -1,224 +1,223 @@
 import 'package:flutter/material.dart';
-import '../../../../shared/widgets/primary_button.dart';
-import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../../../shared/widgets/primary_button.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/constants.dart';
+import '../../../../features/orders/data/models/placed_order.dart';
 
 class OrderSuccessScreen extends StatefulWidget {
-  const OrderSuccessScreen({super.key});
+  final PlacedOrder order;
+
+  const OrderSuccessScreen({super.key, required this.order});
 
   @override
   State<OrderSuccessScreen> createState() => _OrderSuccessScreenState();
 }
 
 class _OrderSuccessScreenState extends State<OrderSuccessScreen>
-    with TickerProviderStateMixin {
-  late AnimationController _confettiCtrl;
-  late AnimationController _contentCtrl;
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
   late Animation<double> _scaleAnim;
   late Animation<double> _fadeAnim;
-
-  // Made non-const to allow DateTime.now() evaluation
-  late final List<({String desc, String icon, String label})> _steps = [
-    (icon: '✅', label: 'Order Confirmed', desc: 'We have received your order'),
-    (icon: '👩‍🍳', label: 'Preparing', desc: 'Our bakers are at work'),
-    (
-      icon: '🎁',
-      label: 'Ready for Pickup',
-      desc:
-          'Your order will be ready at ${DateFormat('h:mm a').format(DateTime.now().add(const Duration(minutes: 25)))}'
-    ),
-  ];
 
   @override
   void initState() {
     super.initState();
-    _confettiCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1800))
-      ..forward();
-    _contentCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600));
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 800));
 
-    _scaleAnim =
-        CurvedAnimation(parent: _contentCtrl, curve: Curves.elasticOut);
-    _fadeAnim = CurvedAnimation(parent: _contentCtrl, curve: Curves.easeOut);
+    _scaleAnim = CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut);
+    _fadeAnim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
 
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (mounted) _contentCtrl.forward();
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (mounted) _ctrl.forward();
     });
   }
 
   @override
   void dispose() {
-    _confettiCtrl.dispose();
-    _contentCtrl.dispose();
+    _ctrl.dispose();
     super.dispose();
+  }
+
+  void _shareOrder() {
+    final o = widget.order;
+    final items = o.items
+        .map((i) =>
+            '${i.name} x${i.quantity} — ${AppConstants.formatPrice(i.price * i.quantity)}')
+        .join('\n');
+    final text = 'Order ${o.id}\n\n'
+        '$items\n\n'
+        'Total: ${AppConstants.formatPrice(o.total)}\n'
+        'Pickup: ${o.addressLabel}, ${o.addressFull}\n'
+        'Est. ready by ${o.eta}';
+    SharePlus.instance.share(ShareParams(text: text));
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final o = widget.order;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
-              const SizedBox(height: 40),
-              // Success icon
+              // ─── Share button ──────────────────────────────
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  onPressed: _shareOrder,
+                  icon: Icon(Icons.share_outlined,
+                      color: colors.onSurfaceVariant, size: 22),
+                ),
+              ),
+              const Spacer(flex: 2),
+
+              // ─── Animated checkmark ─────────────────────────
               ScaleTransition(
                 scale: _scaleAnim,
                 child: Container(
-                  width: 120,
-                  height: 120,
+                  width: 110,
+                  height: 110,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        Theme.of(context).colorScheme.primary,
-                        Theme.of(context).colorScheme.secondary
-                      ],
+                      colors: [colors.primary, colors.secondary],
                     ),
-                    borderRadius: BorderRadius.circular(40),
+                    borderRadius: BorderRadius.circular(36),
                     boxShadow: [
                       BoxShadow(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withValues(alpha: 0.3),
+                        color: colors.primary.withValues(alpha: 0.3),
                         blurRadius: 30,
                         offset: const Offset(0, 10),
                       ),
                     ],
                   ),
                   alignment: Alignment.center,
-                  child: Text('✓',
-                      style: TextStyle(
-                          fontSize: 52,
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontWeight: FontWeight.w300)),
+                  child: Icon(Icons.check_rounded,
+                      color: colors.onPrimary, size: 52),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
+
+              // ─── Title & subtitle ───────────────────────────
               FadeTransition(
                 opacity: _fadeAnim,
                 child: Column(
                   children: [
-                    Text('🎉 Order Placed!',
-                        style: Theme.of(context)
-                            .textTheme
-                            .displayLarge
-                            ?.copyWith(fontSize: 26)),
+                    Text('Order Placed!',
+                        style: theme.textTheme.displayMedium),
                     const SizedBox(height: 8),
                     Text(
-                      '#OD-2849 • Est. ready at 11:00 AM',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(fontSize: 13),
+                      '${o.id}  •  Est. ready by ${o.eta}',
+                      style:
+                          theme.textTheme.bodySmall?.copyWith(fontSize: 13),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 32),
-              // Progress
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Order Progress',
-                              style: Theme.of(context).textTheme.headlineSmall),
-                          Text('Step 1 of 3',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelMedium
-                                  ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .tertiary)),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      ..._steps.asMap().entries.map((e) {
-                        final i = e.key;
-                        final s = e.value;
-                        final isActive = i == 0;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: isActive
-                                      ? Theme.of(context)
-                                          .colorScheme
-                                          .primaryContainer
-                                      : Theme.of(context)
-                                          .dividerColor
-                                          .withValues(alpha: 0.5),
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(s.icon,
-                                    style: const TextStyle(fontSize: 18)),
+
+              // ─── Order details card ────────────────────────
+              FadeTransition(
+                opacity: _fadeAnim,
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Item list
+                        ...o.items.map((item) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                children: [
+                                  Text(item.image,
+                                      style: const TextStyle(fontSize: 20)),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(item.name,
+                                            style: theme.textTheme.bodyMedium
+                                                ?.copyWith(
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                            overflow:
+                                                TextOverflow.ellipsis),
+                                        Text('x${item.quantity}',
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    AppConstants.formatPrice(
+                                        item.price * item.quantity),
+                                    style: AppTextStyles.receipt,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(s.label,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.copyWith(
-                                              color: isActive
-                                                  ? Theme.of(context)
-                                                      .colorScheme
-                                                      .onSurface
-                                                  : Theme.of(context)
-                                                      .colorScheme
-                                                      .onSurfaceVariant,
-                                              fontWeight: isActive
-                                                  ? FontWeight.w500
-                                                  : FontWeight.w400,
-                                            )),
-                                    Text(s.desc,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(fontSize: 12)),
-                                  ],
-                                ),
+                            )),
+                        Divider(height: 20, color: theme.dividerColor),
+                        // Total
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Total',
+                                style: theme.textTheme.bodyMedium
+                                    ?.copyWith(fontWeight: FontWeight.w600)),
+                            Text(AppConstants.formatPrice(o.total),
+                                style: theme.textTheme.headlineSmall),
+                          ],
+                        ),
+                        Divider(height: 20, color: theme.dividerColor),
+                        // Delivery info
+                        Row(
+                          children: [
+                            Icon(Icons.location_on_rounded,
+                                color: colors.error, size: 20),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Text(o.addressLabel,
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.w600)),
+                                  Text(o.addressFull,
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(fontSize: 12)),
+                                ],
                               ),
-                              if (isActive)
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                      shape: BoxShape.circle),
-                                ),
-                            ],
-                          ),
-                        );
-                      }),
-                    ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              const Spacer(),
+
+              const Spacer(flex: 3),
+
+              // ─── CTAs ───────────────────────────────────────
               PrimaryButton(
                 label: 'Track My Order',
-                onTap: () => context.go('/profile/orders'),
+                onTap: () => context.push('/cart/checkout/success/tracking',
+                    extra: o),
               ),
               const SizedBox(height: 12),
               GestureDetector(
@@ -227,10 +226,9 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen>
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   alignment: Alignment.center,
-                  child: Text('Continue Shopping',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant)),
+                  child: Text('Back to Home',
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(color: colors.onSurfaceVariant)),
                 ),
               ),
               const SizedBox(height: 24),

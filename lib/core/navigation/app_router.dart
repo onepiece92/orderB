@@ -8,6 +8,8 @@ import '../../features/catalogue/presentation/pages/product_detail_screen.dart';
 import '../../features/cart/presentation/pages/cart_screen.dart';
 import '../../features/checkout/presentation/pages/checkout_screen.dart';
 import '../../features/checkout/presentation/pages/order_success_screen.dart';
+import '../../features/orders/data/models/placed_order.dart';
+import '../../features/orders/presentation/pages/order_tracking_screen.dart';
 import '../../features/orders/presentation/pages/recent_orders_screen.dart';
 import '../../features/favourites/presentation/pages/favourites_screen.dart';
 import '../../features/profile/presentation/pages/profile_screen.dart';
@@ -121,7 +123,19 @@ final router = GoRouter(
                   routes: [
                     GoRoute(
                       path: 'success',
-                      builder: (context, state) => const OrderSuccessScreen(),
+                      builder: (context, state) {
+                        final order = state.extra as PlacedOrder;
+                        return OrderSuccessScreen(order: order);
+                      },
+                      routes: [
+                        GoRoute(
+                          path: 'tracking',
+                          builder: (context, state) {
+                            final order = state.extra as PlacedOrder;
+                            return OrderTrackingScreen(order: order);
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
+import '../../core/theme/app_theme.dart';
 
 /// Full-width gradient primary CTA button.
 class PrimaryButton extends StatelessWidget {
@@ -17,21 +16,21 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final gradient = theme.extension<AppThemeExtension>()?.primaryGradient;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [AppColors.darkBrown, AppColors.softBrown],
-          ),
+          gradient: gradient,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: AppColors.darkBrown.withValues(alpha: 0.25),
+              color: colors.primary.withValues(alpha: 0.25),
               blurRadius: 30,
               offset: const Offset(0, 8),
             ),
@@ -39,15 +38,19 @@ class PrimaryButton extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                  color: AppColors.cream,
+                  color: colors.onPrimary,
                   strokeWidth: 2,
                 ),
               )
-            : Text(label, style: AppTextStyles.buttonPrimary),
+            : Text(label,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: colors.onPrimary,
+                  letterSpacing: 0.5,
+                )),
       ),
     );
   }
@@ -62,20 +65,23 @@ class SecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.darkBrown, width: 1.5),
+          border: Border.all(color: colors.primary, width: 1.5),
           borderRadius: BorderRadius.circular(16),
         ),
         alignment: Alignment.center,
         child: Text(
           label,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.darkBrown,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colors.primary,
             fontWeight: FontWeight.w500,
           ),
         ),

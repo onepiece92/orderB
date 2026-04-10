@@ -56,18 +56,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _showAddressSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => AddressBottomSheet(
-        selectedId: context.read<AddressProvider>().selectedId,
-        onSelect: (id) => context.read<AddressProvider>().select(id),
-        onAddNew: () {
-          Navigator.pop(context);
-          // navigate to add address handled by parent router
-        },
-      ),
-    );
+    final prov = context.read<AddressProvider>();
+    AddressBottomSheet.show(context,
+        selectedId: prov.selectedId,
+        onSelect: (id) => prov.select(id));
   }
 
   List<Product> get _filtered {

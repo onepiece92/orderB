@@ -152,6 +152,22 @@ class AddressBottomSheet extends StatelessWidget {
     required this.onAddNew,
   });
 
+  /// Show the address selection bottom sheet.
+  static void show(BuildContext context, {
+    required int selectedId,
+    required ValueChanged<int> onSelect,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AddressBottomSheet(
+        selectedId: selectedId,
+        onSelect: onSelect,
+        onAddNew: () => Navigator.pop(context),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(

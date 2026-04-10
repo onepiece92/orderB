@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/constants.dart';
 import '../../data/models/product.dart';
 import '../../../cart/presentation/providers/cart_provider.dart';
 
@@ -99,7 +100,7 @@ class GridProductCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          '\$${product.price.toStringAsFixed(2)}',
+                          AppConstants.formatPrice(product.price),
                           style: AppTextStyles.price,
                           overflow: TextOverflow.ellipsis,
                         ),

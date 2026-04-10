@@ -3,13 +3,16 @@ import '../../../../shared/widgets/loyalty_card.dart';
 import '../../../../core/theme/app_theme.dart';
 
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../../shared/widgets/service_icon.dart';
+import '../providers/user_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<UserProvider>();
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 100),
@@ -50,7 +53,7 @@ class ProfileScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(22),
                     ),
                     alignment: Alignment.center,
-                    child: Text('S',
+                    child: Text(user.initials,
                         style: Theme.of(context)
                             .textTheme
                             .displayLarge
@@ -63,9 +66,9 @@ class ProfileScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Sophie Martin',
+                        Text(user.name,
                             style: Theme.of(context).textTheme.headlineLarge),
-                        Text('sophie.martin@email.com',
+                        Text(user.email,
                             style: Theme.of(context)
                                 .textTheme
                                 .bodySmall
@@ -81,7 +84,7 @@ class ProfileScreen extends StatelessWidget {
                                 .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text('🥐 Croissant Member',
+                          child: Text('🥐 ${user.membershipTier}',
                               style: Theme.of(context)
                                   .textTheme
                                   .labelMedium

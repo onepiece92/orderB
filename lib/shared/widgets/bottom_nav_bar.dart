@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_decorations.dart';
-import '../../core/theme/app_text_styles.dart';
 import '../../features/cart/presentation/providers/cart_provider.dart';
 
 /// App-level bottom navigation bar with 4 tabs.
@@ -18,11 +16,13 @@ class AppBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final cartCount = context.watch<CartProvider>().totalCount;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.warmWhite,
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
         boxShadow: AppDecorations.sheetShadow,
       ),
       child: SafeArea(
@@ -47,7 +47,7 @@ class AppBottomNavBar extends StatelessWidget {
                 index: 1,
                 currentIndex: currentIndex,
                 onTap: onTap,
-                activeColor: AppColors.terracotta,
+                activeColor: colors.error,
               ),
               _NavItemCart(
                 index: 2,
@@ -78,7 +78,7 @@ class _NavItem extends StatelessWidget {
   final int index;
   final int currentIndex;
   final ValueChanged<int> onTap;
-  final Color activeColor;
+  final Color? activeColor;
 
   const _NavItem({
     required this.icon,
@@ -87,13 +87,16 @@ class _NavItem extends StatelessWidget {
     required this.index,
     required this.currentIndex,
     required this.onTap,
-    this.activeColor = AppColors.darkBrown,
+    this.activeColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isActive = index == currentIndex;
-    final color = isActive ? activeColor : AppColors.textLight;
+    final color = isActive
+        ? (activeColor ?? theme.colorScheme.primary)
+        : theme.colorScheme.onSurfaceVariant;
     return GestureDetector(
       onTap: () => onTap(index),
       behavior: HitTestBehavior.opaque,
@@ -104,9 +107,10 @@ class _NavItem extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             label,
-            style: AppTextStyles.navLabel.copyWith(
+            style: theme.textTheme.labelSmall?.copyWith(
               color: color,
               fontWeight: isActive ? FontWeight.w600 : null,
+              fontSize: 10,
             ),
           ),
         ],
@@ -130,8 +134,11 @@ class _NavItemCart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final isActive = index == currentIndex;
-    final color = isActive ? AppColors.darkBrown : AppColors.textLight;
+    final color = isActive ? colors.primary : colors.onSurfaceVariant;
+
     return GestureDetector(
       onTap: () => onTap(index),
       behavior: HitTestBehavior.opaque,
@@ -155,16 +162,17 @@ class _NavItemCart extends StatelessWidget {
                   child: Container(
                     width: 18,
                     height: 18,
-                    decoration: const BoxDecoration(
-                      color: AppColors.terracotta,
+                    decoration: BoxDecoration(
+                      color: colors.error,
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       '$badge',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.white,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colors.onError,
                         fontWeight: FontWeight.w700,
+                        fontSize: 10,
                       ),
                     ),
                   ),
@@ -174,9 +182,10 @@ class _NavItemCart extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             'Cart',
-            style: AppTextStyles.navLabel.copyWith(
+            style: theme.textTheme.labelSmall?.copyWith(
               color: color,
               fontWeight: isActive ? FontWeight.w600 : null,
+              fontSize: 10,
             ),
           ),
         ],

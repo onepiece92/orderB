@@ -5,6 +5,7 @@ import '../widgets/reorder_card.dart';
 import '../../../cart/presentation/providers/cart_provider.dart';
 import '../../../../shared/widgets/app_back_button.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants.dart';
 
 class RecentOrdersScreen extends StatefulWidget {
   const RecentOrdersScreen({super.key});
@@ -15,11 +16,14 @@ class RecentOrdersScreen extends StatefulWidget {
 
 class _RecentOrdersScreenState extends State<RecentOrdersScreen>
     with TickerProviderStateMixin {
-  late AnimationController _pageCtrl;
-  late Animation<double> _pageFade;
-  late Animation<Offset> _pageSlide;
+  late final AnimationController _pageCtrl;
+  late final Animation<double> _pageFade;
+  late final Animation<Offset> _pageSlide;
+  late final List<AnimationController> _cardCtrls;
 
-  final List<AnimationController> _cardCtrls = [];
+  final _orders = CatalogueLocalDatasource.recentOrders;
+  late final double _totalSpent =
+      _orders.fold<double>(0, (sum, o) => sum + o.total);
 
   @override
   void initState() {
@@ -31,21 +35,18 @@ class _RecentOrdersScreenState extends State<RecentOrdersScreen>
     _pageSlide = Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero)
         .animate(CurvedAnimation(parent: _pageCtrl, curve: Curves.easeOut));
 
-    final orders = CatalogueLocalDatasource.recentOrders;
-    for (var i = 0; i < orders.length; i++) {
-      final ctrl = AnimationController(
-          vsync: this, duration: const Duration(milliseconds: 400));
-      _cardCtrls.add(ctrl);
-    }
+    _cardCtrls = List.generate(
+      _orders.length,
+      (_) => AnimationController(
+          vsync: this, duration: const Duration(milliseconds: 400)),
+    );
 
-    // Stagger card animations exactly like JSX (0.15 + i * 0.1s delay)
-    Future.microtask(() async {
-      _pageCtrl.forward();
-      for (var i = 0; i < _cardCtrls.length; i++) {
-        await Future.delayed(Duration(milliseconds: 150 + i * 100));
+    _pageCtrl.forward();
+    for (var i = 0; i < _cardCtrls.length; i++) {
+      Future.delayed(Duration(milliseconds: 150 + i * 100), () {
         if (mounted) _cardCtrls[i].forward();
-      }
-    });
+      });
+    }
   }
 
   @override
@@ -59,11 +60,11 @@ class _RecentOrdersScreenState extends State<RecentOrdersScreen>
 
   @override
   Widget build(BuildContext context) {
-    final orders = CatalogueLocalDatasource.recentOrders;
-    final totalSpent = orders.fold<double>(0, (sum, o) => sum + o.total);
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: const Padding(
           padding: EdgeInsets.only(left: 8.0),
@@ -71,147 +72,143 @@ class _RecentOrdersScreenState extends State<RecentOrdersScreen>
         ),
         title: const Text('Recent Orders'),
       ),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Scrollable body ──────────────────────────────────
-            Expanded(
-              child: FadeTransition(
-                opacity: _pageFade,
-                child: SlideTransition(
-                  position: _pageSlide,
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
-                    children: [
-                      // ── This Month summary card ──────────────────
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        margin: const EdgeInsets.only(bottom: 24),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Theme.of(context).colorScheme.primary,
-                              Theme.of(context).colorScheme.onSurfaceVariant
+      body: _orders.isEmpty
+          ? _EmptyOrders()
+          : FadeTransition(
+              opacity: _pageFade,
+              child: SlideTransition(
+                position: _pageSlide,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+                  children: [
+                    // ── This Month summary ──────────────────────
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      margin: const EdgeInsets.only(bottom: 24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [colors.primary, colors.onSurfaceVariant],
+                        ),
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('THIS MONTH',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colors.secondary,
+                                letterSpacing: 1.5,
+                                fontSize: 11,
+                              )),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${_orders.length}',
+                                    style: theme.textTheme.displayLarge
+                                        ?.copyWith(
+                                      color: colors.onPrimary,
+                                      fontSize: 32,
+                                    ),
+                                  ),
+                                  Text(
+                                    'orders placed',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: colors.onPrimary
+                                          .withValues(alpha: 0.5),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    AppConstants.formatPrice(_totalSpent),
+                                    style: theme.textTheme.displayLarge
+                                        ?.copyWith(
+                                      color: colors.onPrimary,
+                                      fontSize: 24,
+                                    ),
+                                  ),
+                                  Text(
+                                    'total spent',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: colors.onPrimary
+                                          .withValues(alpha: 0.5),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('THIS MONTH',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelSmall
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .tertiary,
-                                      letterSpacing: 1.5,
-                                      fontSize: 11,
-                                    )),
-                            const SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '${orders.length}',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .displayLarge
-                                          ?.copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onPrimary,
-                                            fontSize: 32,
-                                          ),
-                                    ),
-                                    Text(
-                                      'orders placed',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: Colors.white
-                                                .withValues(alpha: 0.5),
-                                            fontSize: 13,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      '\$${totalSpent.toStringAsFixed(2)}',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .displayLarge
-                                          ?.copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onPrimary,
-                                            fontSize: 24,
-                                          ),
-                                    ),
-                                    Text(
-                                      'total spent',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: Colors.white
-                                                .withValues(alpha: 0.5),
-                                            fontSize: 13,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                        ],
                       ),
+                    ),
 
-                      // ── Order cards ──────────────────────────────
-                      ...orders.asMap().entries.map((entry) {
-                        final i = entry.key;
-                        final order = entry.value;
-                        final ctrl = _cardCtrls[i];
-                        return FadeTransition(
-                          opacity: CurvedAnimation(
-                              parent: ctrl, curve: Curves.easeOut),
-                          child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0, 0.08),
-                              end: Offset.zero,
-                            ).animate(CurvedAnimation(
-                                parent: ctrl, curve: Curves.easeOut)),
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: OrderCard(
-                                order: order,
-                                featured: false,
-                                onReorder: () {
-                                  context.read<CartProvider>().reorder(order);
-                                  context.push('/cart');
-                                },
-                              ),
+                    // ── Order cards ─────────────────────────────
+                    ...List.generate(_orders.length, (i) {
+                      final order = _orders[i];
+                      final ctrl = _cardCtrls[i];
+                      return FadeTransition(
+                        opacity: CurvedAnimation(
+                            parent: ctrl, curve: Curves.easeOut),
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.08),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                              parent: ctrl, curve: Curves.easeOut)),
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: OrderCard(
+                              order: order,
+                              onReorder: () {
+                                context.read<CartProvider>().reorder(order);
+                                context.push('/cart');
+                              },
                             ),
                           ),
-                        );
-                      }),
-                    ],
-                  ),
+                        ),
+                      );
+                    }),
+                  ],
                 ),
               ),
+            ),
+    );
+  }
+}
+
+class _EmptyOrders extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.receipt_long_outlined,
+                size: 80, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(height: 16),
+            Text('No orders yet',
+                style: theme.textTheme.headlineMedium),
+            const SizedBox(height: 8),
+            Text(
+              'Your order history will appear here',
+              style: theme.textTheme.bodySmall,
+              textAlign: TextAlign.center,
             ),
           ],
         ),

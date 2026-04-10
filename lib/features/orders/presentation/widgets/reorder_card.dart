@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/models/order.dart';
+import '../../../../core/constants.dart';
 
 /// Compact order history card widget.
 class OrderCard extends StatelessWidget {
@@ -16,18 +17,22 @@ class OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final fg = featured ? colors.onPrimary : null;
+    final fgMuted = featured
+        ? colors.onPrimary.withValues(alpha: 0.7)
+        : theme.textTheme.bodySmall?.color;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: featured
-            ? Theme.of(context).colorScheme.primary
-            : Theme.of(context).cardColor,
+        color: featured ? colors.primary : theme.cardColor,
         borderRadius: BorderRadius.circular(18),
-        border:
-            featured ? null : Border.all(color: Theme.of(context).dividerColor),
+        border: featured ? null : Border.all(color: theme.dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
+            color: theme.shadowColor.withValues(alpha: 0.1),
             blurRadius: 14,
             offset: const Offset(0, 3),
           )
@@ -36,57 +41,58 @@ class OrderCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header: ID, date, status badge
           Row(
             children: [
               Text(
                 order.id,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: featured
-                          ? Theme.of(context).colorScheme.onPrimary
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: fg ?? colors.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
               ),
               const SizedBox(width: 6),
               Text(
                 '· ${order.date.split(',').first}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: featured
-                          ? Theme.of(context)
-                              .colorScheme
-                              .onPrimary
-                              .withValues(alpha: 0.7)
-                          : Theme.of(context).textTheme.bodySmall?.color,
-                    ),
+                style: theme.textTheme.bodySmall?.copyWith(color: fgMuted),
               ),
+              const Spacer(),
+              _StatusBadge(status: order.status, featured: featured),
             ],
           ),
           const SizedBox(height: 10),
-          ...order.items.map((item) => Text(
+          // Items
+          ...order.items.take(3).map((item) => Text(
                 '${item.name} × ${item.qty}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: featured
-                          ? Theme.of(context)
-                              .colorScheme
-                              .onPrimary
-                              .withValues(alpha: 0.9)
-                          : Theme.of(context).textTheme.bodySmall?.color,
-                      fontSize: 13,
-                    ),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: featured
+                      ? colors.onPrimary.withValues(alpha: 0.9)
+                      : theme.textTheme.bodySmall?.color,
+                  fontSize: 13,
+                ),
               )),
+          if (order.items.length > 3)
+            Text(
+              '+${order.items.length - 3} more',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: featured
+                    ? colors.onPrimary.withValues(alpha: 0.6)
+                    : colors.onSurfaceVariant,
+                fontSize: 12,
+              ),
+            ),
           const SizedBox(height: 10),
+          // Price & reorder
           Row(
             children: [
               Text(
-                '\$${order.total.toStringAsFixed(2)}',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: featured
-                          ? Theme.of(context).colorScheme.onPrimary
-                          : Theme.of(context).colorScheme.primary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
+                AppConstants.formatPrice(order.total),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: fg ?? colors.primary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               if (onReorder != null) ...[
                 const Spacer(),
@@ -101,29 +107,69 @@ class OrderCard extends StatelessWidget {
                   ),
                   child: Text(
                     'Reorder',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: featured
-                              ? Theme.of(context).colorScheme.onPrimary
-                              : Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          decoration: TextDecoration.underline,
-                          decorationColor: featured
-                              ? Theme.of(context)
-                                  .colorScheme
-                                  .onPrimary
-                                  .withValues(alpha: 0.5)
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withValues(alpha: 0.5),
-                        ),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: fg ?? colors.primary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      decoration: TextDecoration.underline,
+                      decorationColor: (fg ?? colors.primary)
+                          .withValues(alpha: 0.5),
+                    ),
                   ),
                 ),
               ],
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  final String status;
+  final bool featured;
+
+  const _StatusBadge({required this.status, required this.featured});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    final Color bg;
+    final Color fg;
+    if (featured) {
+      bg = colors.onPrimary.withValues(alpha: 0.15);
+      fg = colors.onPrimary;
+    } else {
+      switch (status) {
+        case 'Delivered':
+        case 'Picked Up':
+          bg = colors.primary.withValues(alpha: 0.1);
+          fg = colors.primary;
+        case 'Cancelled':
+          bg = colors.error.withValues(alpha: 0.1);
+          fg = colors.error;
+        default:
+          bg = colors.secondary.withValues(alpha: 0.15);
+          fg = colors.secondary;
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        status,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: fg,
+          fontWeight: FontWeight.w600,
+          fontSize: 10,
+        ),
       ),
     );
   }

@@ -26,6 +26,9 @@ abstract final class CatalogueLocalDatasource {
           'Our signature 48-hour fermented sourdough with a crackling crust and tender, airy crumb. Made with heritage wheat flour.',
       tags: ['Organic', 'Vegan'],
       time: '48hr ferment',
+      variants: [
+        VariantGroup(title: 'Size', options: ['Small', 'Medium', 'Large']),
+      ],
     ),
     Product(
       id: 2,
@@ -68,6 +71,10 @@ abstract final class CatalogueLocalDatasource {
           'Three layers of rich dark chocolate sponge, filled with ganache and finished with Belgian chocolate shavings.',
       tags: ['Gluten-Free Option'],
       time: '24hr notice',
+      variants: [
+        VariantGroup(title: 'Size', options: ['6 inch', '8 inch', '10 inch']),
+        VariantGroup(title: 'Filling', options: ['Ganache', 'Mousse', 'Cream']),
+      ],
     ),
     Product(
       id: 5,
@@ -138,6 +145,10 @@ abstract final class CatalogueLocalDatasource {
           'Thick and chewy chocolate chip cookies made with Belgian chocolate chunks and a touch of sea salt.',
       tags: ['Contains Dairy'],
       time: 'Baked daily',
+      variants: [
+        VariantGroup(title: 'Type', options: ['Dark', 'Milk', 'White']),
+        VariantGroup(title: 'Size', options: ['Regular', 'Large']),
+      ],
     ),
     Product(
       id: 10,
@@ -200,22 +211,22 @@ abstract final class CatalogueLocalDatasource {
   static const List<Address> savedAddresses = [
     Address(
       id: 1,
-      label: 'Baker Street',
-      address: '123 Baker Street, Soho, London W1F 0TH',
+      label: 'Breaking Bread Bakery',
+      address: '17th street, Lakeside, Pokhara, Nepal',
       icon: '🏠',
       type: 'Pickup',
     ),
     Address(
       id: 2,
-      label: 'Office',
-      address: "45 King's Road, Chelsea, London SW3 4ND",
+      label: 'Brand Builder Office',
+      address: "Niva galli, Chipledhunga, Pokhara, Nepal",
       icon: '💼',
-      type: 'Delivery',
+      type: 'Pick up',
     ),
     Address(
       id: 3,
       label: 'Home',
-      address: '78 Elm Park, Kensington, London W8 5QN',
+      address: 'your home address here',
       icon: '🏡',
       type: 'Delivery',
     ),

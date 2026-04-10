@@ -14,20 +14,16 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
   void _showAddressSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => AddressBottomSheet(
-        selectedId: context.read<AddressProvider>().selectedId,
-        onSelect: (id) => context.read<AddressProvider>().select(id),
-        onAddNew: () => Navigator.pop(context),
-      ),
-    );
+    final prov = context.read<AddressProvider>();
+    AddressBottomSheet.show(context,
+        selectedId: prov.selectedId,
+        onSelect: (id) => prov.select(id));
   }
 
   @override
@@ -178,7 +174,7 @@ class CartScreen extends StatelessWidget {
                                             style:
                                                 AppTextStyles.headlineMedium),
                                         Text(
-                                            '\$${cart.total.toStringAsFixed(2)}',
+                                            AppConstants.formatPrice(cart.total),
                                             style: AppTextStyles.priceLarge
                                                 .copyWith(
                                               color: AppColors.terracotta,
@@ -202,7 +198,7 @@ class CartScreen extends StatelessWidget {
                 left: 0,
                 right: 0,
                 child: PrimaryButton(
-                  label: 'Checkout — \$${cart.total.toStringAsFixed(2)}',
+                  label: 'Checkout — ${AppConstants.formatPrice(cart.total)}',
                   onTap: () {
                     if (cart.items.isNotEmpty) {
                       context.push('/cart/checkout');
@@ -231,7 +227,7 @@ class _PriceSummaryRow extends StatelessWidget {
         Text(label,
             style:
                 AppTextStyles.bodyMedium.copyWith(color: AppColors.textLight)),
-        Text('\$${value.toStringAsFixed(2)}',
+        Text(AppConstants.formatPrice(value),
             style: AppTextStyles.bodyLarge.copyWith(
                 fontWeight: FontWeight.w600, color: AppColors.darkBrown)),
       ],

@@ -23,22 +23,10 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _quantity = 0;
-  int _activeImage = 0;
   final TextEditingController _instructionsCtrl = TextEditingController();
 
-  static const _variantGroups = [
-    (
-      title: 'Fillings',
-      options: ['Buff', 'Chicken', 'Veg'],
-    ),
-    (
-      title: 'Options',
-      options: ['Steam', 'Fry', 'Chilly', 'Kothe'],
-    ),
-  ];
-
   late final List<int> _selectedVariants =
-      List.filled(_variantGroups.length, 0);
+      List.filled(widget.product.variants.length, 0);
 
   @override
   void initState() {
@@ -154,34 +142,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                           fontWeight: FontWeight.w600)),
                             ),
                           ),
-                        // Gallery dots
-                        Positioned(
-                          bottom: 18,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: List.generate(3, (i) {
-                              return GestureDetector(
-                                onTap: () => setState(() => _activeImage = i),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 300),
-                                  margin:
-                                      const EdgeInsets.symmetric(horizontal: 3),
-                                  width: _activeImage == i ? 20 : 7,
-                                  height: 7,
-                                  decoration: BoxDecoration(
-                                    color: _activeImage == i
-                                        ? Theme.of(context).colorScheme.surface
-                                        : Theme.of(context)
-                                            .colorScheme
-                                            .surface
-                                            .withValues(alpha: 0.45),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -201,16 +161,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Name
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(widget.product.name,
-                              style: Theme.of(context).textTheme.displayMedium),
-                          const SizedBox(height: 6),
-                          Text(widget.product.time,
-                              style: Theme.of(context).textTheme.bodySmall),
-                        ],
-                      ),
+                      Text(widget.product.name,
+                          style: Theme.of(context).textTheme.displayMedium),
+                      const SizedBox(height: 6),
+                      Text(widget.product.time,
+                          style: Theme.of(context).textTheme.bodySmall),
                       const SizedBox(height: 12),
 
                       // Description
@@ -269,8 +224,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       const SizedBox(height: 24),
 
                       // Variant groups
-                      ...List.generate(_variantGroups.length, (gi) {
-                        final group = _variantGroups[gi];
+                      ...List.generate(widget.product.variants.length, (gi) {
+                        final group = widget.product.variants[gi];
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [

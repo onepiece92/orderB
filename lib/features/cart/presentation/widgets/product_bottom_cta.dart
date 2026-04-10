@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../../../core/constants.dart';
 
 /// Glassmorphism-style floating bottom CTA for the Product Detail screen.
 /// A frosted-glass card with a quantity stepper, animated price, and a
@@ -103,7 +104,7 @@ class _ProductBottomCtaState extends State<ProductBottomCta>
                             child: FadeTransition(opacity: anim, child: child),
                           ),
                           child: Text(
-                            '\$${widget.totalPrice.toStringAsFixed(2)}',
+                            AppConstants.formatPrice(widget.totalPrice),
                             key: ValueKey(widget.totalPrice),
                             style: Theme.of(context)
                                 .textTheme

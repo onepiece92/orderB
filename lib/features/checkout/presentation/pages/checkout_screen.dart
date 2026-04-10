@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../features/address/data/models/address.dart';
 import '../../../../features/cart/presentation/providers/cart_provider.dart';
 import '../../../../features/address/presentation/providers/address_provider.dart';
-import 'package:intl/intl.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/app_back_button.dart';
 import '../../../../features/cart/presentation/widgets/empty_cart_view.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/constants.dart';
+import '../../../../features/address/presentation/widgets/address_selector.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import '../../../../features/orders/data/models/placed_order.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -18,8 +20,7 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  int _step = 1; // 1 = delivery, 2 = payment & confirm
-  int _selectedPayment = 0; // Default to Cash on Delivery
+  int _selectedPayment = 0;
 
   static const _paymentMethods = [
     (icon: '💵', label: 'Cash on Delivery', sub: 'Pay when your order arrives'),
@@ -27,17 +28,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     (icon: '🍎', label: 'Apple Pay', sub: 'Express checkout'),
   ];
 
-  String _stepLabel(Address addr) =>
-      addr.type == 'Pickup' ? 'Pickup' : 'Delivery';
-
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
     final addr = context.watch<AddressProvider>().selected;
-    final step1Label = _stepLabel(addr);
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final receiptStyle = AppTextStyles.receipt;
+    final headerStyle =
+        receiptStyle.copyWith(color: theme.textTheme.bodySmall?.color);
+    final subtotal = cart.subtotal;
+    final total = cart.total;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: const AppBackButton(),
         title: const Text('Checkout'),
@@ -47,45 +51,202 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ? const EmptyCartView()
             : Stack(
                 children: [
-                  Column(
-                    children: [
-                      // Step indicator
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-                        child: Row(
-                          children: [
-                            _StepIndicator(
-                                label: step1Label, step: 1, current: _step),
-                            const SizedBox(width: 6),
-                            _StepIndicator(
-                                label: 'Payment & Confirm',
-                                step: 2,
-                                current: _step),
-                          ],
-                        ),
-                      ),
-
-                      // Step content
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 300),
-                            child: _step == 1
-                                ? _Step1(addr: addr, key: const ValueKey(1))
-                                : _Step2(
-                                    cart: cart,
-                                    addr: addr,
-                                    methods: _paymentMethods,
-                                    selected: _selectedPayment,
-                                    onSelect: (i) =>
-                                        setState(() => _selectedPayment = i),
-                                    key: const ValueKey(2),
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 140),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ─── Receipt Card ─────────────────────────
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 24),
+                          decoration: BoxDecoration(
+                            color: colors.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: theme.dividerColor),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                AppConstants.appName,
+                                style: receiptStyle.copyWith(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: colors.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _dashedLine(context),
+                              const SizedBox(height: 12),
+                              // Table header
+                              Row(
+                                children: [
+                                  Expanded(
+                                    flex: 5,
+                                    child: Text('Item', style: headerStyle),
                                   ),
+                                  SizedBox(
+                                    width: 70,
+                                    child: Text('Qty',
+                                        style: headerStyle,
+                                        textAlign: TextAlign.center),
+                                  ),
+                                  SizedBox(
+                                    width: 56,
+                                    child: Text('Amt',
+                                        style: headerStyle,
+                                        textAlign: TextAlign.right),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              // Item rows
+                              ...cart.items.asMap().entries.map((e) {
+                                final idx = e.key;
+                                final item = e.value;
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 5,
+                                        child: Text(
+                                          item.product.name,
+                                          style: receiptStyle,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 70,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () => cart.updateQuantity(
+                                                  idx, item.quantity - 1),
+                                              child: Icon(
+                                                  Icons.remove_circle_outline,
+                                                  size: 16,
+                                                  color: colors.onSurfaceVariant),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 6),
+                                              child: Text('${item.quantity}',
+                                                  style: receiptStyle),
+                                            ),
+                                            GestureDetector(
+                                              onTap: () => cart.updateQuantity(
+                                                  idx, item.quantity + 1),
+                                              child: Icon(
+                                                  Icons.add_circle_outline,
+                                                  size: 16,
+                                                  color: colors.primary),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 56,
+                                        child: Text(
+                                          (item.product.price * item.quantity)
+                                              .toStringAsFixed(0),
+                                          style: receiptStyle,
+                                          textAlign: TextAlign.right,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                              const SizedBox(height: 8),
+                              _dashedLine(context),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('Subtotal', style: headerStyle),
+                                  Text(AppConstants.formatPrice(subtotal),
+                                      style: receiptStyle),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('Delivery', style: headerStyle),
+                                  Text('Free', style: receiptStyle),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('Grand Total',
+                                      style: theme.textTheme.headlineMedium),
+                                  Text(
+                                    AppConstants.formatPrice(total),
+                                    style: theme.textTheme.headlineMedium
+                                        ?.copyWith(color: colors.error),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 28),
+
+                        // ─── Deliver To ───────────────────────────
+                        Text('Pickup From',
+                            style: theme.textTheme.headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 12),
+                        _SelectableCard(
+                          icon: Icons.location_on_rounded,
+                          iconColor: colors.error,
+                          title: addr.label,
+                          badge: addr.type,
+                          subtitle: addr.address,
+                          onTap: () {
+                            final prov = context.read<AddressProvider>();
+                            AddressBottomSheet.show(context,
+                                selectedId: prov.selectedId,
+                                onSelect: (id) => prov.select(id));
+                          },
+                        ),
+                        const SizedBox(height: 28),
+
+                        // ─── Payment Method ───────────────────────
+                        Text('Payment Method',
+                            style: theme.textTheme.headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 12),
+                        _SelectableCard(
+                          icon: Icons.account_balance_wallet_rounded,
+                          iconColor: colors.error,
+                          title: _paymentMethods[_selectedPayment].label,
+                          subtitle: _paymentMethods[_selectedPayment].sub,
+                          onTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              builder: (_) => _PaymentBottomSheet(
+                                methods: _paymentMethods,
+                                selectedIndex: _selectedPayment,
+                                onSelect: (i) {
+                                  setState(() => _selectedPayment = i);
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
 
                   // CTA Button
@@ -94,15 +255,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     left: 0,
                     right: 0,
                     child: PrimaryButton(
-                      label: _step < 2
-                          ? 'Continue'
-                          : 'Place Order — Rs ${cart.total.toStringAsFixed(0)}',
+                      label:
+                          'Place Order — ${AppConstants.formatPrice(cart.total)}',
                       onTap: () {
-                        if (_step < 2) {
-                          setState(() => _step++);
-                        } else {
-                          context.go('/cart/checkout/success');
-                        }
+                        final eta = DateFormat('h:mm a').format(
+                            DateTime.now()
+                                .add(const Duration(minutes: 25)));
+                        final order = PlacedOrder(
+                          id: '#OD-${DateTime.now().millisecondsSinceEpoch % 10000}',
+                          eta: eta,
+                          items: cart.items
+                              .map((i) => PlacedOrderItem(
+                                    name: i.product.name,
+                                    image: i.product.image,
+                                    quantity: i.quantity,
+                                    price: i.product.price,
+                                  ))
+                              .toList(),
+                          total: cart.total,
+                          addressLabel: addr.label,
+                          addressFull: addr.address,
+                        );
+                        cart.clear();
+                        context.go('/cart/checkout/success', extra: order);
                       },
                     ),
                   ),
@@ -111,376 +286,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
     );
   }
-}
-
-class _StepIndicator extends StatelessWidget {
-  final String label;
-  final int step;
-  final int current;
-
-  const _StepIndicator(
-      {required this.label, required this.step, required this.current});
-
-  @override
-  Widget build(BuildContext context) {
-    final active = step <= current;
-    final isCurrent = step == current;
-    return Expanded(
-      child: Column(
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 400),
-            height: 3,
-            decoration: BoxDecoration(
-              color: active
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).dividerColor,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: active
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Step1 extends StatelessWidget {
-  final dynamic addr;
-
-  const _Step1({required this.addr, super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('${addr.type == 'Pickup' ? 'Pickup' : 'Delivery'} Details',
-            style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 16),
-        _InfoTile(
-          label: addr.type == 'Pickup' ? 'PICKUP LOCATION' : 'DELIVERY ADDRESS',
-          icon: addr.icon,
-          title: addr.label,
-          subtitle: addr.address,
-        ),
-        const SizedBox(height: 12),
-        _InfoTile(
-          label: '${addr.type == 'Pickup' ? 'PICKUP' : 'DELIVERY'} TIME',
-          icon: '🕐',
-          title:
-              'Today, ${DateFormat('h:mm a').format(DateTime.now().add(const Duration(minutes: 25)))}',
-          subtitle: null,
-        ),
-        const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('SPECIAL INSTRUCTIONS',
-                    style: Theme.of(context)
-                        .textTheme
-                        .labelSmall
-                        ?.copyWith(fontSize: 11, letterSpacing: 0.5)),
-                const SizedBox(height: 8),
-                TextField(
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    hintText: 'Any special requests for your order...',
-                    hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurfaceVariant
-                              .withValues(alpha: 0.5),
-                        ),
-                    border: InputBorder.none,
-                    isDense: false,
-                    contentPadding: const EdgeInsets.only(top: 8),
-                  ),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _InfoTile extends StatelessWidget {
-  final String label;
-  final String icon;
-  final String title;
-  final String? subtitle;
-
-  const _InfoTile({
-    required this.label,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelSmall
-                    ?.copyWith(fontSize: 11, letterSpacing: 0.5)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Text(icon, style: const TextStyle(fontSize: 16)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  color:
-                                      Theme.of(context).colorScheme.primary)),
-                      if (subtitle != null)
-                        Text(subtitle!,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(fontSize: 12)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Step2 extends StatelessWidget {
-  final CartProvider cart;
-  final dynamic addr;
-  final List<({String icon, String label, String sub})> methods;
-  final int selected;
-  final ValueChanged<int> onSelect;
-
-  const _Step2(
-      {required this.cart,
-      required this.addr,
-      required this.methods,
-      required this.selected,
-      required this.onSelect,
-      super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final receiptStyle = AppTextStyles.receipt;
-    final headerStyle = receiptStyle.copyWith(
-        color: theme.textTheme.bodySmall?.color);
-    final subtotal = cart.subtotal;
-    final total = cart.total;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ─── Receipt Card ──────────────────────────────────────
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: theme.dividerColor),
-          ),
-          child: Column(
-            children: [
-              // Store name
-              Text(
-                'La Petite Boulangerie',
-                style: receiptStyle.copyWith(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: colors.primary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Dashed separator
-              _dashedLine(context),
-              const SizedBox(height: 12),
-              // Table header
-              Row(
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: Text('Item', style: headerStyle),
-                  ),
-                  SizedBox(
-                    width: 40,
-                    child: Text('Qty', style: headerStyle,
-                        textAlign: TextAlign.center),
-                  ),
-                  SizedBox(
-                    width: 56,
-                    child: Text('Rate', style: headerStyle,
-                        textAlign: TextAlign.right),
-                  ),
-                  SizedBox(
-                    width: 56,
-                    child: Text('Amt', style: headerStyle,
-                        textAlign: TextAlign.right),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Item rows
-              ...cart.items.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 5,
-                      child: Text(
-                        item.product.name,
-                        style: receiptStyle,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(
-                      width: 40,
-                      child: Text(
-                        '${item.quantity}',
-                        style: receiptStyle,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    SizedBox(
-                      width: 56,
-                      child: Text(
-                        item.product.price.toStringAsFixed(0),
-                        style: receiptStyle,
-                        textAlign: TextAlign.right,
-                      ),
-                    ),
-                    SizedBox(
-                      width: 56,
-                      child: Text(
-                        (item.product.price * item.quantity).toStringAsFixed(0),
-                        style: receiptStyle,
-                        textAlign: TextAlign.right,
-                      ),
-                    ),
-                  ],
-                ),
-              )),
-              const SizedBox(height: 8),
-              _dashedLine(context),
-              const SizedBox(height: 12),
-              // Subtotal
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Subtotal', style: headerStyle),
-                  Text('Rs ${subtotal.toStringAsFixed(0)}', style: receiptStyle),
-                ],
-              ),
-              const SizedBox(height: 4),
-              // Delivery
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Delivery', style: headerStyle),
-                  Text('Free', style: receiptStyle),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // Grand Total
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Grand Total',
-                    style: theme.textTheme.headlineMedium,
-                  ),
-                  Text(
-                    'Rs ${total.toStringAsFixed(0)}',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      color: colors.error,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 28),
-
-        // ─── Deliver To ────────────────────────────────────────
-        Text('Deliver to',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                )),
-        const SizedBox(height: 12),
-        _SelectableCard(
-          icon: Icons.location_on_rounded,
-          iconColor: colors.error,
-          title: addr.label,
-          badge: addr.type,
-          subtitle: addr.address,
-        ),
-        const SizedBox(height: 28),
-
-        // ─── Payment Method ────────────────────────────────────
-        Text('Payment Method',
-            style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                )),
-        const SizedBox(height: 12),
-        _SelectableCard(
-          icon: Icons.account_balance_wallet_rounded,
-          iconColor: colors.error,
-          title: methods[selected].label,
-          subtitle: methods[selected].sub,
-          onTap: () {
-            // Cycle through payment methods
-            onSelect((selected + 1) % methods.length);
-          },
-        ),
-      ],
-    );
-  }
 
   Widget _dashedLine(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         const dashWidth = 5.0;
         const dashSpace = 3.0;
-        final count =
-            (constraints.maxWidth / (dashWidth + dashSpace)).floor();
+        final count = (constraints.maxWidth / (dashWidth + dashSpace)).floor();
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(count, (_) {
@@ -488,7 +300,8 @@ class _Step2 extends StatelessWidget {
               width: dashWidth,
               height: 1,
               child: DecoratedBox(
-                decoration: BoxDecoration(color: Theme.of(context).dividerColor),
+                decoration:
+                    BoxDecoration(color: Theme.of(context).dividerColor),
               ),
             );
           }),
@@ -567,10 +380,7 @@ class _SelectableCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodySmall,
-                  ),
+                  Text(subtitle, style: theme.textTheme.bodySmall),
                 ],
               ),
             ),
@@ -578,6 +388,112 @@ class _SelectableCard extends StatelessWidget {
                 color: theme.textTheme.bodySmall?.color, size: 24),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PaymentBottomSheet extends StatelessWidget {
+  final List<({String icon, String label, String sub})> methods;
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
+
+  const _PaymentBottomSheet({
+    required this.methods,
+    required this.selectedIndex,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: theme.dividerColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Text('Select Payment Method',
+              style: theme.textTheme.headlineLarge?.copyWith(fontSize: 18)),
+          const SizedBox(height: 16),
+          ...methods.asMap().entries.map((e) {
+            final i = e.key;
+            final m = e.value;
+            final isSelected = i == selectedIndex;
+            return GestureDetector(
+              onTap: () {
+                onSelect(i);
+                Navigator.pop(context);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? theme.dividerColor
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected ? colors.primary : theme.dividerColor,
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? colors.primary.withValues(alpha: 0.1)
+                            : theme.dividerColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(m.icon,
+                          style: const TextStyle(fontSize: 18)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(m.label,
+                              style: theme.textTheme.bodyLarge
+                                  ?.copyWith(fontWeight: FontWeight.w500)),
+                          Text(m.sub,
+                              style: theme.textTheme.bodySmall
+                                  ?.copyWith(fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    if (isSelected)
+                      Icon(Icons.check_rounded,
+                          color: colors.primary, size: 20),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
